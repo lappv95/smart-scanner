@@ -100,7 +100,7 @@ export default function SettingsScreen() {
         <SettingItem
           icon="mail-outline"
           label="Liên hệ hỗ trợ"
-          onPress={() => Alert.alert("Liên hệ", "Email: support@smartqr.app")}
+          onPress={() => Alert.alert("Liên hệ", "Email: lappv.it@gmail.com")}
         />
       </VStack>
 

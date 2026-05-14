@@ -34,7 +34,7 @@ export default function HistoryScreen() {
   );
   const loadHistory = async () => {
     const data = JSON.parse(await AsyncStorage.getItem("scanHistory")) || [];
-    setHistory(data.reverse()); // Hiển thị mục mới nhất lên đầu
+    setHistory(data); // Hiển thị mục mới nhất lên đầu
   };
 
   const clearHistory = async () => {

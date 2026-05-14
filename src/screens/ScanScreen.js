@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Linking from "expo-linking";
-import { Box, Button, Center, Text } from "native-base";
+import { Box, Button, Center, Text, useColorModeValue } from "native-base";
 import { useEffect, useRef, useState } from "react";
 import { Alert, Animated, Dimensions, Easing, StyleSheet, View } from "react-native";
 
@@ -9,10 +9,18 @@ const { width } = Dimensions.get("window");
 const SCAN_SIZE = width * 0.7;
 
 export default function ScanScreen() {
+  // Hooks phải gọi ở đầu component
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedData, setScannedData] = useState(null);
   const cameraRef = useRef(null);
   const animation = useRef(new Animated.Value(0)).current;
+  
+  // Color mode values
+  const boxBgColor = useColorModeValue("white", "gray.800");
+  const textColor = useColorModeValue("black", "white");
+  const textSecondaryColor = useColorModeValue("black", "gray.200");
+  const buttonBgColor = useColorModeValue("primary.500", "primary.500");
+  const instructionTextColor = useColorModeValue("white", "gray.300");
 
   useEffect(() => {
     if (!permission) {
@@ -72,7 +80,10 @@ export default function ScanScreen() {
           {
             text: "Mở",
             style: "default",
-            onPress: () => Linking.openURL(data),
+            onPress: () => {
+              Linking.openURL(data);
+              setScannedData(null);
+            },
           },
         ],
         { cancelable: true }
@@ -118,21 +129,48 @@ export default function ScanScreen() {
       </View>
 
       {/* Hướng dẫn & kết quả */}
-      <Center position="absolute" bottom={100} alignSelf="center" w="80%">
+      <Center
+        position="absolute"
+        bottom={100}
+        alignSelf="center"
+        w="80%"
+      >
         {scannedData ? (
-          <Box bg="white" p={4} borderRadius="lg" shadow={2}>
-            <Text bold mb={2}>
+          <Box
+            bg={boxBgColor}
+            p={4}
+            borderRadius="lg"
+            shadow={2}
+          >
+            <Text
+              bold
+              mb={2}
+              color={textColor}
+            >
               Kết quả:
             </Text>
-            <Text mb={3}>{scannedData}</Text>
-            <Button onPress={() => setScannedData(null)}>Quét lại</Button>
+
+            <Text
+              mb={3}
+              color={textSecondaryColor}
+            >
+              {scannedData}
+            </Text>
+
+            <Button
+              onPress={() => setScannedData(null)}
+              bg={buttonBgColor}
+            >
+              Quét lại
+            </Button>
           </Box>
         ) : (
-          <Text color="white" fontSize="md">
+          <Text color={instructionTextColor} fontSize="md">
             Đưa mã QR vào giữa khung để quét
           </Text>
         )}
       </Center>
+
     </View>
   );
 }

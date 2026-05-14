@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useColorMode } from "native-base";
+import GenerateScreen from '../src/screens/GenerateScreen';
 import HistoryScreen from '../src/screens/HistoryScreen';
 import ScanScreen from '../src/screens/ScanScreen';
 import SettingsScreen from '../src/screens/SettingsScreen';
@@ -20,6 +21,7 @@ const { colorMode } = useColorMode();
                 tabBarIcon: ({ color, size }) => {
                     let iconName;
                     if (route.name === "Scan") iconName = "qr-code-outline";
+                    else if (route.name === "Generate") iconName = "create-outline";
                     else if (route.name === "History") iconName = "time-outline";
                     else if (route.name === "Settings") iconName = "settings-outline";
                     return <Ionicons name={iconName} size={size} color={color} />;
@@ -27,6 +29,7 @@ const { colorMode } = useColorMode();
             })}>
 
             <Tab.Screen name="Scan" component={ScanScreen} />
+            <Tab.Screen name="Generate" component={GenerateScreen} />
             <Tab.Screen name="History" component={HistoryScreen} />
             <Tab.Screen name="Settings" component={SettingsScreen} />
 
