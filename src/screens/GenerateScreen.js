@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
+import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import QRCode from "react-native-qrcode-svg";
 
@@ -13,13 +14,14 @@ import {
     useColorModeValue,
 } from "native-base";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Alert, TextInput } from "react-native";
 
 export default function GenerateScreen() {
   const [inputText, setInputText] = useState("");
   const [showQR, setShowQR] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const qrRef = useRef();
 
   const bgColor = useColorModeValue("gray.100", "gray.900");
   const cardBgColor = useColorModeValue("white", "gray.800");
@@ -74,12 +76,52 @@ export default function GenerateScreen() {
     }
 
     try {
-      await Sharing.shareAsync(
-        `data:text/plain;charset=utf-8,${encodeURIComponent(
-          inputText
-        )}`
-      );
+      setIsLoading(true);
+      
+      // Generate QR code as SVG and convert to PNG
+      if (qrRef.current && typeof qrRef.current.toDataURL === 'function') {
+        qrRef.current.toDataURL(async (dataURL) => {
+          let fileUri;
+          try {
+            // Save QR image to file
+            const fileName = `QR_${Date.now()}.png`;
+            fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+            // dataURL may be a full data URL (data:image/png;base64,...) or raw base64 string
+            const base64 = typeof dataURL === 'string' && dataURL.includes(',') ? dataURL.split(',')[1] : dataURL;
+            if (!base64) throw new Error('Không nhận được dữ liệu ảnh từ QR component');
+
+            await FileSystem.writeAsStringAsync(
+              fileUri,
+              base64,
+              { encoding: FileSystem.EncodingType.Base64 }
+            );
+
+            // Verify file exists
+            const info = await FileSystem.getInfoAsync(fileUri);
+            if (!info.exists) throw new Error('Tệp ảnh QR không được tạo');
+
+            // Share the file
+            await Sharing.shareAsync(info.uri, {
+              mimeType: 'image/png',
+              dialogTitle: 'Chia sẻ mã QR',
+            });
+          } catch (error) {
+            Alert.alert('Lỗi', `Không thể chia sẻ: ${error.message}`);
+          } finally {
+            // cleanup: remove the temporary file if it exists
+            try {
+              if (fileUri) await FileSystem.deleteAsync(fileUri, { idempotent: true });
+            } catch (_) {}
+            setIsLoading(false);
+          }
+        });
+      } else {
+        setIsLoading(false);
+        Alert.alert('Lỗi', 'Không thể lấy dữ liệu ảnh từ QR component.');
+      }
     } catch (error) {
+      setIsLoading(false);
       Alert.alert(
         "Lỗi",
         `Không thể chia sẻ: ${error.message}`
@@ -204,6 +246,7 @@ export default function GenerateScreen() {
               rounded="xl"
             >
               <QRCode
+                getRef={qrRef}
                 value={inputText || " "}
                 size={250}
                 color="black"
@@ -239,6 +282,7 @@ export default function GenerateScreen() {
                 variant="outline"
                 borderColor="primary.500"
                 rounded="lg"
+                isLoading={isLoading}
                 leftIcon={
                   <Ionicons
                     name="share-social-outline"
@@ -251,7 +295,7 @@ export default function GenerateScreen() {
                   color="primary.500"
                   fontWeight="600"
                 >
-                  Chia sẻ
+                  Chia sẻ ảnh QR
                 </Text>
               </Button>
             </VStack>
